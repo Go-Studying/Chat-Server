@@ -3,10 +3,14 @@ package main
 import (
 	"chat-server/internal/config"
 	"chat-server/internal/routes"
-	"log"
+	"log/slog"
+	"os"
 )
 
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
 	// 설정 로드
 	cfg := config.Load()
 
@@ -15,10 +19,11 @@ func main() {
 
 	// 서버 시작
 	addr := ":" + cfg.Port
-	log.Printf("Server starting on %s", addr)
-	log.Printf("Environment: %s", cfg.Environment)
+	slog.Info("Server starting", "address", addr)
+	slog.Info("Environment", "env", cfg.Environment)
 
 	if err := router.Run(addr); err != nil {
-		log.Fatal("Failed to start server:", err)
+		slog.Error("Failed to start server", "error", err)
+		os.Exit(1)
 	}
 }

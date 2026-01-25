@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -21,6 +22,10 @@ type Config struct {
 
 func Load() *Config {
 	godotenv.Load()
+
+	if err := godotenv.Load(); err != nil {
+		log.Printf("Warning: Error loading .env file: %s", err)
+	}
 
 	return &Config{
 		Port:        getEnv("PORT", "8080"),
@@ -47,16 +52,12 @@ func getEnv(key, defaultValue string) string {
 func getEnvRequire(key string) string {
 	value := os.Getenv(key)
 	if value == "" {
-		log.Fatalf("환경 별수 설정하세요!! %s", key)
+		log.Fatalf("필수 환경 변수가 설정되지 않았습니다: %s", key)
 	}
 	return value
 }
 
 func (c *Config) GetDSN() string {
-	return "host=" + c.DBHost +
-		" user=" + c.DBUser +
-		" password=" + c.DBPassword +
-		" dbname=" + c.DBName +
-		" port=" + c.DBPort +
-		" sslmode=" + c.DBSSLMode
+	return fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
+		c.DBHost, c.DBUser, c.DBPassword, c.DBName, c.DBPort, c.DBSSLMode)
 }
