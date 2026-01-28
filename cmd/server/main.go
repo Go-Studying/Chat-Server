@@ -2,6 +2,7 @@ package main
 
 import (
 	"chat-server/internal/config"
+	"chat-server/internal/models/database"
 	"chat-server/internal/routes"
 	"log/slog"
 	"os"
@@ -13,6 +14,21 @@ func main() {
 
 	// 설정 로드
 	cfg := config.Load()
+
+	// DB 연결
+	db, err := database.New(cfg)
+	if err != nil {
+		slog.Error("Failed to connect database", "error", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	// 마이그레이션
+	if err := db.AutoMigrate(); err != nil {
+		slog.Error("Failed to migrate database", "error", err)
+		os.Exit(1)
+	}
+	slog.Info("Database migration completed")
 
 	// 라우터 설정
 	router := routes.SetupRouter(cfg)
