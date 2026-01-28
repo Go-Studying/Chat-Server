@@ -24,10 +24,10 @@ func New(cfg *config.Config) (*Database, error) {
 	}
 
 	db, err := gorm.Open(postgres.Open(cfg.GetDSN()), gormConfig)
+	sqlDB, err := db.DB()
 	if err != nil {
 		return nil, err
 	}
-	sqlDB, err := db.DB()
 	sqlDB.SetMaxIdleConns(10)
 	sqlDB.SetMaxOpenConns(100)
 

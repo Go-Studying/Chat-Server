@@ -22,6 +22,6 @@ type Message struct {
 	Sender User     `gorm:"foreignKey:SenderID" json:"sender,omitempty"`
 }
 
-func (Message) Tablename() string {
+func (Message) TableName() string {
 	return "messages"
 }

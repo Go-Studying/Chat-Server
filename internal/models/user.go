@@ -12,7 +12,7 @@ type User struct {
 	Email    string     `gorm:"uniqueIndex;size:255;not null" json:"email"`
 	Username string     `gorm:"uniqueIndex;size:50;not null" json:"username"`
 	Password string     `gorm:"size:255;not null" json:"-"` // json응답에서 제외
-	imgUrl   string     `gorm:"size:500;" json:"img_url,omitempty"`
+	ImgUrl   string     `gorm:"size:500;" json:"img_url,omitempty"`
 	Status   UserStatus `gorm:"size:20;default:online" json:"status"`
 
 	// Relation
