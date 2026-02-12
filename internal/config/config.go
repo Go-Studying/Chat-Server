@@ -22,7 +22,6 @@ type Config struct {
 
 func Load() *Config {
 
-
 	if err := godotenv.Load(); err != nil {
 		log.Printf("Warning: Error loading .env file: %s", err)
 	}

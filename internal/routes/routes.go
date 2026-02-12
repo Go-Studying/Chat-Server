@@ -2,11 +2,13 @@ package routes
 
 import (
 	"chat-server/internal/config"
+	"chat-server/internal/handler"
+	"chat-server/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter(cfg *config.Config) *gin.Engine {
+func SetupRouter(cfg *config.Config, authHandler *handler.AuthHandler) *gin.Engine {
 	// 환경에 따른 Gin 모드 설정
 	if cfg.Environment == "production" {
 		gin.SetMode(gin.ReleaseMode)
@@ -24,11 +26,19 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		})
 	})
 
-	// API 그룹
-	/*api := router.Group("/api/")
+	// 인증
+	auth := router.Group("/api/auth")
 	{
-		// 나중에 루트 추가(API 구현시)
-	}*/
+		auth.POST("/signup", authHandler.SignUp)
+		auth.POST("/login", authHandler.Login)
+	}
+
+	// 사용자 인증 필요한 api
+	api := router.Group("/api")
+	api.Use(middleware.AuthMiddleware(cfg))
+	{
+		api.GET("/test", authHandler.Test)
+	}
 
 	return router
 }
