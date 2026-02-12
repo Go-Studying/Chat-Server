@@ -3,11 +3,14 @@ package service
 import (
 	"chat-server/internal/models"
 	"chat-server/internal/repository"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
+
+var ErrDuplicateKey = errors.New("email already used")
 
 type AuthService struct {
 	r *repository.UserRepository
@@ -18,12 +21,18 @@ func NewAuthService(r *repository.UserRepository) *AuthService {
 }
 
 func (s AuthService) SignUp(email string, username string, password string) (uuid.UUID, error) {
-	user, _ := s.r.FindUserByEmail(email)
+	user, err := s.r.FindUserByEmail(email)
 	if user != nil {
-		return uuid.Nil, fmt.Errorf("email already used")
+		return uuid.Nil, ErrDuplicateKey
+	}
+	if err != nil {
+		return uuid.Nil, err
 	}
 
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return uuid.Nil, err
+	}
 
 	user = &models.User{
 		Email:    email,
@@ -36,9 +45,12 @@ func (s AuthService) SignUp(email string, username string, password string) (uui
 }
 
 func (s AuthService) Login(email string, password string) (uuid.UUID, error) {
-	user, _ := s.r.FindUserByEmail(email)
+	user, err := s.r.FindUserByEmail(email)
 	if user == nil {
 		return uuid.Nil, fmt.Errorf("user not found")
+	}
+	if err != nil {
+		return uuid.Nil, err
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {

@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"chat-server/internal/config"
 	"chat-server/internal/middleware"
 	"chat-server/internal/service"
 	"chat-server/internal/tools/security"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,11 +14,13 @@ import (
 
 type AuthHandler struct {
 	authService *service.AuthService
+	cfg         *config.Config
 }
 
-func NewAuthHandler(authService *service.AuthService) *AuthHandler {
+func NewAuthHandler(authService *service.AuthService, cfg *config.Config) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
+		cfg:         cfg,
 	}
 }
 
@@ -46,11 +50,15 @@ func (h *AuthHandler) SignUp(c *gin.Context) {
 
 	userID, err := h.authService.SignUp(req.Email, req.Username, req.Password)
 	if err != nil {
+		if errors.Is(err, service.ErrDuplicateKey) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to sign up"})
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{"userId": userID})
 
+	c.JSON(http.StatusCreated, gin.H{"userId": userID})
 }
 
 func (h *AuthHandler) Login(c *gin.Context) {
@@ -62,17 +70,17 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	userID, err := h.authService.Login(req.Email, req.Password)
 	if err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "invalid credentials"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
 		return
 	}
 
-	token, err := security.NewJWT(userID)
+	token, err := security.NewJWT(userID, h.cfg.JWTSecret)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token"})
 		return
 	}
 
-	c.SetCookie("auth_token",
+	c.SetCookie(middleware.AuthCookieName,
 		token,
 		60*60*24,
 		"/",

@@ -1,7 +1,6 @@
 package security
 
 import (
-	"chat-server/internal/config"
 	"errors"
 	"time"
 
@@ -11,11 +10,11 @@ import (
 
 const Duration = time.Hour * 24
 
-func ParseJWT(token string) (jwt.MapClaims, error) {
+func ParseJWT(token string, secretKey string) (jwt.MapClaims, error) {
 	parser := jwt.NewParser(jwt.WithValidMethods([]string{"HS256"}))
 
 	parsedToken, err := parser.Parse(token, func(t *jwt.Token) (any, error) {
-		return []byte(config.Load().JWTSecret), nil
+		return []byte(secretKey), nil
 	})
 	if err != nil {
 		return nil, err
@@ -28,14 +27,12 @@ func ParseJWT(token string) (jwt.MapClaims, error) {
 	return nil, errors.New("unable to parse token")
 }
 
-func NewJWT(userID uuid.UUID) (string, error) {
-	key := config.Load().JWTSecret
-
+func NewJWT(userID uuid.UUID, secretKey string) (string, error) {
 	claims := jwt.MapClaims{
 		"sub": userID,
 		"exp": time.Now().Add(Duration).Unix(),
 		"iat": time.Now().Unix(),
 	}
 
-	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(key))
+	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(secretKey))
 }

@@ -4,23 +4,15 @@ import (
 	"chat-server/internal/config"
 	"chat-server/internal/handler"
 	"chat-server/internal/middleware"
-	"chat-server/internal/models/database"
-	"chat-server/internal/repository"
-	"chat-server/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter(cfg *config.Config) *gin.Engine {
+func SetupRouter(cfg *config.Config, authHandler *handler.AuthHandler) *gin.Engine {
 	// 환경에 따른 Gin 모드 설정
 	if cfg.Environment == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
-
-	db, _ := database.New(config.Load())
-	userRepository := repository.NewUserRepository(db.DB)
-	authService := service.NewAuthService(userRepository)
-	authHandler := handler.NewAuthHandler(authService)
 
 	router := gin.Default()
 
@@ -35,14 +27,15 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	})
 
 	// 인증
-	api := router.Group("/api")
+	auth := router.Group("/api/auth")
 	{
-		api.POST("/signup", authHandler.SignUp)
-		api.POST("/login", authHandler.Login)
+		auth.POST("/signup", authHandler.SignUp)
+		auth.POST("/login", authHandler.Login)
 	}
 
 	// 사용자 인증 필요한 api
-	api.Use(middleware.AuthMiddleware())
+	api := router.Group("/api")
+	api.Use(middleware.AuthMiddleware(cfg))
 	{
 		api.GET("/test", authHandler.Test)
 	}
