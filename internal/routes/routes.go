@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter(cfg *config.Config, authHandler *handler.AuthHandler) *gin.Engine {
+func SetupRouter(cfg *config.Config, authHandler *handler.AuthHandler, chatRoomHandler *handler.ChatRoomHandler) *gin.Engine {
 	// 환경에 따른 Gin 모드 설정
 	if cfg.Environment == "production" {
 		gin.SetMode(gin.ReleaseMode)
@@ -38,6 +38,14 @@ func SetupRouter(cfg *config.Config, authHandler *handler.AuthHandler) *gin.Engi
 	api.Use(middleware.AuthMiddleware(cfg))
 	{
 		api.GET("/test", authHandler.Test)
+
+		rooms := api.Group("/rooms")
+		{
+			rooms.POST("", chatRoomHandler.Create)
+			rooms.GET("", chatRoomHandler.GetMyRooms)
+			rooms.GET("/:id", chatRoomHandler.GetRoom)
+			rooms.DELETE("/:id", chatRoomHandler.Delete)
+		}
 	}
 
 	return router
