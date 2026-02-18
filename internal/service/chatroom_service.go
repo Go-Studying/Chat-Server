@@ -17,7 +17,8 @@ func NewChatRoomService(r *repository.ChatRoomRepository) *ChatRoomService {
 
 func (s *ChatRoomService) CreateRoom(name string, ownerID uuid.UUID) (*models.ChatRoom, error) {
 	room := &models.ChatRoom{
-		Name: name,
+		Name:      name,
+		CreatedBy: ownerID,
 		Members: []models.RoomMember{
 			{UserID: ownerID, Role: models.MemberRoleOwner},
 		},
