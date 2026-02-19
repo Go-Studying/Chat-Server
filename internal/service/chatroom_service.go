@@ -29,13 +29,23 @@ func (s *ChatRoomService) CreateRoom(name string, ownerID uuid.UUID) (*models.Ch
 	return room, nil
 }
 
-func (s *ChatRoomService) GetRoom(id uuid.UUID) (*models.ChatRoom, error) {
+func (s *ChatRoomService) GetRoom(id, userID uuid.UUID) (*models.ChatRoom, error) {
 	room, err := s.r.FindByID(id)
 	if err != nil {
 		return nil, err
 	}
 	if room == nil {
 		return nil, ErrRoomNotFound
+	}
+	isMember := false
+	for _, m := range room.Members {
+		if m.UserID == userID {
+			isMember = true
+			break
+		}
+	}
+	if !isMember {
+		return nil, ErrNotMember
 	}
 	return room, nil
 }
@@ -44,6 +54,16 @@ func (s *ChatRoomService) GetMyRooms(userID uuid.UUID) ([]models.ChatRoom, error
 	return s.r.FindByUserID(userID)
 }
 
-func (s *ChatRoomService) DeleteRoom(roomID uuid.UUID) error {
+func (s *ChatRoomService) DeleteRoom(roomID, userID uuid.UUID) error {
+	room, err := s.r.FindByID(roomID)
+	if err != nil {
+		return err
+	}
+	if room == nil {
+		return ErrRoomNotFound
+	}
+	if room.CreatedBy != userID {
+		return ErrNotOwner
+	}
 	return s.r.Delete(roomID)
 }
