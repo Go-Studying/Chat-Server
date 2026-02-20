@@ -31,6 +31,10 @@ func main() {
 	authService := service.NewAuthService(userRepo)
 	authHandler := handler.NewAuthHandler(authService, cfg)
 
+	chatRoomRepo := repository.NewChatRoomRepository(db.DB)
+	chatRoomService := service.NewChatRoomService(chatRoomRepo)
+	chatRoomHandler := handler.NewChatRoomHandler(chatRoomService)
+
 	// 마이그레이션
 	if err := db.AutoMigrate(); err != nil {
 		slog.Error("Failed to migrate database", "error", err)
@@ -39,7 +43,7 @@ func main() {
 	slog.Info("Database migration completed")
 
 	// 라우터 설정
-	router := routes.SetupRouter(cfg, authHandler)
+	router := routes.SetupRouter(cfg, authHandler, chatRoomHandler)
 
 	// 서버 시작
 	addr := ":" + cfg.Port

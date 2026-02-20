@@ -3,14 +3,11 @@ package service
 import (
 	"chat-server/internal/models"
 	"chat-server/internal/repository"
-	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
-
-var ErrDuplicateKey = errors.New("email already used")
 
 type AuthService struct {
 	r *repository.UserRepository
