@@ -37,8 +37,6 @@ func SetupRouter(cfg *config.Config, authHandler *handler.AuthHandler, chatRoomH
 	api := router.Group("/api")
 	api.Use(middleware.AuthMiddleware(cfg))
 	{
-		api.GET("/test", authHandler.Test)
-
 		rooms := api.Group("/rooms")
 		{
 			rooms.POST("", chatRoomHandler.Create)

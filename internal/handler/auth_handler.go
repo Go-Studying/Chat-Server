@@ -91,8 +91,3 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"userId": userID})
 }
-
-func (h *AuthHandler) Test(c *gin.Context) {
-	userID, _ := middleware.GetCurrentUser(c)
-	c.JSON(http.StatusOK, gin.H{"hello": userID})
-}
