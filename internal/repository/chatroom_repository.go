@@ -45,3 +45,9 @@ func (r *ChatRoomRepository) FindByUserID(userID uuid.UUID) ([]models.ChatRoom, 
 func (r *ChatRoomRepository) Delete(id uuid.UUID) error {
 	return r.db.Delete(&models.ChatRoom{}, "id = ?", id).Error
 }
+
+func (r *ChatRoomRepository) AddMember(roomID uuid.UUID, member *models.RoomMember) error {
+	return r.db.Model(&models.ChatRoom{Base: models.Base{ID: roomID}}).
+		Association("Members").
+		Append(member)
+}
