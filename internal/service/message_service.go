@@ -13,8 +13,8 @@ type MessageService struct {
 	cs *ChatRoomService
 }
 
-func NewMessageService(r *repository.MessageRepository) *MessageService {
-	return &MessageService{mr: r}
+func NewMessageService(mr *repository.MessageRepository, cs *ChatRoomService) *MessageService {
+	return &MessageService{mr: mr, cs: cs}
 }
 
 func (s *MessageService) CreateMessage(roomID uuid.UUID, senderID uuid.UUID, content string, messageType models.MessageType, userID uuid.UUID) (*models.Message, error) {

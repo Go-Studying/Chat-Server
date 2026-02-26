@@ -28,7 +28,7 @@ func (r *MessageRepository) FindAll(roomID uuid.UUID, cursor *time.Time) ([]mode
 		query = query.Where("created_at < ?", cursor)
 	}
 
-	err := r.db.
+	err := query.
 		Order("created_at DESC").
 		Limit(10).
 		Find(&messages).Error

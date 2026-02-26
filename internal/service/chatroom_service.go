@@ -29,17 +29,17 @@ func (s *ChatRoomService) CreateRoom(name string, ownerID uuid.UUID) (*models.Ch
 	return room, nil
 }
 
-func (s *ChatRoomService) JoinRoom(id, userID uuid.UUID) (*models.ChatRoom, error) {
+func (s *ChatRoomService) JoinRoom(id, userID uuid.UUID) error {
 	room, err := s.r.FindByID(id)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if room == nil {
-		return nil, ErrRoomNotFound
+		return ErrRoomNotFound
 	}
 	for _, m := range room.Members {
 		if m.UserID == userID {
-			return nil, ErrMemberExists
+			return ErrMemberExists
 		}
 	}
 
@@ -48,13 +48,7 @@ func (s *ChatRoomService) JoinRoom(id, userID uuid.UUID) (*models.ChatRoom, erro
 		UserID: userID,
 		Role:   models.MemberRoleMember,
 	}
-	err = s.r.AddMember(room.ID, &member)
-	if err != nil {
-		return nil, err
-	}
-	room.Members = append(room.Members, member)
-
-	return room, nil
+	return s.r.AddMember(room.ID, &member)
 }
 
 func (s *ChatRoomService) GetRoom(id, userID uuid.UUID) (*models.ChatRoom, error) {

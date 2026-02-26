@@ -54,5 +54,9 @@ func CurrentUserID(c *gin.Context) (uuid.UUID, error) {
 		return uuid.Nil, errors.New("userID not found")
 	}
 
-	return userID.(uuid.UUID), nil
+	userIDStr, ok := userID.(string)
+	if !ok {
+		return uuid.Nil, errors.New("userID in context is not a string")
+	}
+	return uuid.Parse(userIDStr)
 }
