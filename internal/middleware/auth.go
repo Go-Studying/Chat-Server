@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 const AuthCookieName = "auth_token"
@@ -47,11 +48,15 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 	}
 }
 
-func GetCurrentUser(c *gin.Context) (string, error) {
+func CurrentUserID(c *gin.Context) (uuid.UUID, error) {
 	userID, ok := c.Get(contextKey)
 	if !ok {
-		return "", errors.New("userID not found")
+		return uuid.Nil, errors.New("userID not found")
 	}
 
-	return userID.(string), nil
+	userIDStr, ok := userID.(string)
+	if !ok {
+		return uuid.Nil, errors.New("userID in context is not a string")
+	}
+	return uuid.Parse(userIDStr)
 }

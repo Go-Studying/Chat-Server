@@ -27,14 +27,6 @@ type CreateRoomRequest struct {
 	Name string `json:"name"`
 }
 
-func getCurrentUserID(c *gin.Context) (uuid.UUID, error) {
-	userIDStr, err := middleware.GetCurrentUser(c)
-	if err != nil {
-		return uuid.Nil, err
-	}
-	return uuid.Parse(userIDStr)
-}
-
 func (h *ChatRoomHandler) Create(c *gin.Context) {
 	var req CreateRoomRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -42,7 +34,7 @@ func (h *ChatRoomHandler) Create(c *gin.Context) {
 		return
 	}
 
-	userID, err := getCurrentUserID(c)
+	userID, err := middleware.CurrentUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user"})
 		return
@@ -63,7 +55,7 @@ func (h *ChatRoomHandler) Create(c *gin.Context) {
 }
 
 func (h *ChatRoomHandler) GetMyRooms(c *gin.Context) {
-	userID, err := getCurrentUserID(c)
+	userID, err := middleware.CurrentUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user"})
 		return
@@ -85,7 +77,7 @@ func (h *ChatRoomHandler) GetRoom(c *gin.Context) {
 		return
 	}
 
-	userID, err := getCurrentUserID(c)
+	userID, err := middleware.CurrentUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user"})
 		return
@@ -115,7 +107,7 @@ func (h *ChatRoomHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	userID, err := getCurrentUserID(c)
+	userID, err := middleware.CurrentUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user"})
 		return
