@@ -39,3 +39,16 @@ func (r *UserRepository) FindUserByEmail(email string) (*models.User, error) {
 
 	return &user, nil
 }
+
+func (r *UserRepository) FindUserByID(id uuid.UUID) (*models.User, error) {
+	var user models.User
+	err := r.db.Take(&user, "id = ?", id).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &user, nil
+}

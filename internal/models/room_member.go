@@ -15,7 +15,6 @@ const (
 
 type RoomMember struct {
 	Base
-	ID       uuid.UUID  `gorm:"type:uuid;primary_key" json:"id"`
 	RoomID   uuid.UUID  `gorm:"type:uuid;not null;index:idx_room_user,unique" json:"room_id"`
 	UserID   uuid.UUID  `gorm:"type:uuid;not null;index:idx_room_user,unique" json:"user_id"`
 	Role     MemberRole `gorm:"size:20;not null;default:member" json:"role"`
