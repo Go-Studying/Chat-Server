@@ -100,6 +100,33 @@ func (h *ChatRoomHandler) GetRoom(c *gin.Context) {
 	c.JSON(http.StatusOK, room)
 }
 
+func (h *ChatRoomHandler) JoinRoom(c *gin.Context) {
+	roomID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid room id"})
+		return
+	}
+
+	userID, err := middleware.CurrentUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user"})
+		return
+	}
+
+	err = h.chatRoomService.JoinRoom(roomID, userID)
+	if err != nil {
+		if errors.Is(err, service.ErrRoomNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "room not found"})
+			return
+		}
+		if errors.Is(err, service.ErrMemberExists) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "already a member of this room"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to join room"})
+	}
+}
+
 func (h *ChatRoomHandler) Delete(c *gin.Context) {
 	roomID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
