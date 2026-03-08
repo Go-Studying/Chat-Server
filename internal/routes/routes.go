@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"chat-server/internal/chat"
 	"chat-server/internal/config"
 	"chat-server/internal/handler"
 	"chat-server/internal/middleware"
@@ -8,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter(cfg *config.Config, authHandler *handler.AuthHandler, chatRoomHandler *handler.ChatRoomHandler) *gin.Engine {
+func SetupRouter(cfg *config.Config, authHandler *handler.AuthHandler, chatRoomHandler *handler.ChatRoomHandler, hub *chat.Hub) *gin.Engine {
 	// 환경에 따른 Gin 모드 설정
 	if cfg.Environment == "production" {
 		gin.SetMode(gin.ReleaseMode)
@@ -43,6 +44,8 @@ func SetupRouter(cfg *config.Config, authHandler *handler.AuthHandler, chatRoomH
 			rooms.GET("", chatRoomHandler.GetMyRooms)
 			rooms.GET("/:id", chatRoomHandler.GetRoom)
 			rooms.DELETE("/:id", chatRoomHandler.Delete)
+			rooms.POST("/:id/join", chatRoomHandler.JoinRoom)
+			rooms.GET("/ws/:id", hub.ServeWs)
 		}
 	}
 
