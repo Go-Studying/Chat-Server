@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"chat-server/internal/config"
 	"chat-server/internal/middleware"
 	"chat-server/internal/models"
 	"chat-server/internal/repository"
 	"chat-server/internal/service"
 	"chat-server/internal/websocket"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -14,25 +16,37 @@ import (
 	gorillaws "github.com/gorilla/websocket"
 )
 
-var upgrader = gorillaws.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
-}
-
 type WebSocketHandler struct {
-	manager        *websocket.Manager
-	messageService *service.MessageService
-	userRepo       *repository.UserRepository
+	upgrader        gorillaws.Upgrader
+	manager         *websocket.Manager
+	messageService  *service.MessageService
+	chatRoomService *service.ChatRoomService
+	userRepo        *repository.UserRepository
 }
 
-func NewWebSocketHandler(manager *websocket.Manager, ms *service.MessageService, ur *repository.UserRepository) *WebSocketHandler {
+func NewWebSocketHandler(cfg *config.Config, manager *websocket.Manager, ms *service.MessageService, cs *service.ChatRoomService, ur *repository.UserRepository) *WebSocketHandler {
+	allowedOrigins := make(map[string]struct{}, len(cfg.AllowedOrigins))
+	for _, o := range cfg.AllowedOrigins {
+		allowedOrigins[o] = struct{}{}
+	}
+
 	return &WebSocketHandler{
-		manager:        manager,
-		messageService: ms,
-		userRepo:       ur,
+		upgrader: gorillaws.Upgrader{
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
+			CheckOrigin: func(r *http.Request) bool {
+				origin := r.Header.Get("Origin")
+				if origin == "" {
+					return false
+				}
+				_, ok := allowedOrigins[origin]
+				return ok
+			},
+		},
+		manager:         manager,
+		messageService:  ms,
+		chatRoomService: cs,
+		userRepo:        ur,
 	}
 }
 
@@ -49,7 +63,13 @@ func (h *WebSocketHandler) Connect(c *gin.Context) {
 		return
 	}
 
-	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	// WebSocket 업그레이드 전에 멤버 확인
+	if _, err := h.chatRoomService.GetRoom(roomID, userID); err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "not a member of this room"})
+		return
+	}
+
+	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		return
 	}
@@ -62,7 +82,7 @@ func (h *WebSocketHandler) Connect(c *gin.Context) {
 
 	go h.sendHistory(client)
 	go client.WritePump()
-	client.ReadPump(h.messageService, h.userRepo)
+	go client.ReadPump(h.messageService, h.userRepo)
 }
 
 func (h *WebSocketHandler) sendHistory(client *websocket.Client) {
@@ -70,6 +90,10 @@ func (h *WebSocketHandler) sendHistory(client *websocket.Client) {
 	if err != nil {
 		return
 	}
-	out, _ := json.Marshal(websocket.Event{Type: websocket.EventHistory, Payload: msgs})
+	out, err := json.Marshal(websocket.Event{Type: websocket.EventHistory, Payload: msgs})
+	if err != nil {
+		slog.Error("failed to marshal history event", "error", err)
+		return
+	}
 	client.Send(out)
 }

@@ -1,6 +1,8 @@
 package websocket
 
 import (
+	"log/slog"
+
 	"github.com/google/uuid"
 )
 
@@ -43,6 +45,9 @@ func (r *Room) Run() {
 				select {
 				case client.send <- message:
 				default:
+					slog.Warn("clent send buffer full, disconnecting",
+						"roomID", r.id,
+						"userID", userID)
 					close(client.send)
 					delete(r.clients, userID)
 				}

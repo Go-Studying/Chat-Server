@@ -39,7 +39,7 @@ func main() {
 	messageRepo := repository.NewMessageRepository(db.DB)
 	messageService := service.NewMessageService(messageRepo, chatRoomService)
 	wsManager := websocket.NewManager()
-	wsHandler := handler.NewWebSocketHandler(wsManager, messageService, userRepo)
+	wsHandler := handler.NewWebSocketHandler(cfg, wsManager, messageService, chatRoomService, userRepo)
 
 	// 마이그레이션
 	if err := db.AutoMigrate(); err != nil {
