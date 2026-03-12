@@ -4,20 +4,22 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	Port        string
-	DBHost      string
-	DBPort      string
-	DBUser      string
-	DBPassword  string
-	DBName      string
-	DBSSLMode   string
-	JWTSecret   string
-	Environment string
+	Port           string
+	DBHost         string
+	DBPort         string
+	DBUser         string
+	DBPassword     string
+	DBName         string
+	DBSSLMode      string
+	JWTSecret      string
+	Environment    string
+	AllowedOrigins []string
 }
 
 func Load() *Config {
@@ -26,16 +28,19 @@ func Load() *Config {
 		log.Printf("Warning: Error loading .env file: %s", err)
 	}
 
+	allowedOrigins := strings.Split(getEnv("ALLOWED_ORIGINS", "http://localhost:3000"), ",")
+
 	return &Config{
-		Port:        getEnv("PORT", "8080"),
-		DBHost:      getEnv("DB_HOST", "localhost"),
-		DBPort:      getEnv("DB_PORT", "5432"),
-		DBUser:      getEnvRequire("DB_USER"),
-		DBPassword:  getEnvRequire("DB_PASSWORD"),
-		DBName:      getEnvRequire("DB_NAME"),
-		DBSSLMode:   getEnv("DB_SSLMODE", "disable"),
-		JWTSecret:   getEnvRequire("JWT_SECRET"),
-		Environment: getEnv("ENV", "development"),
+		Port:           getEnv("PORT", "8080"),
+		DBHost:         getEnv("DB_HOST", "localhost"),
+		DBPort:         getEnv("DB_PORT", "5432"),
+		DBUser:         getEnvRequire("DB_USER"),
+		DBPassword:     getEnvRequire("DB_PASSWORD"),
+		DBName:         getEnvRequire("DB_NAME"),
+		DBSSLMode:      getEnv("DB_SSLMODE", "disable"),
+		JWTSecret:      getEnvRequire("JWT_SECRET"),
+		Environment:    getEnv("ENV", "development"),
+		AllowedOrigins: allowedOrigins,
 	}
 }
 

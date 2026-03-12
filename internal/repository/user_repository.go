@@ -39,3 +39,7 @@ func (r *UserRepository) FindUserByEmail(email string) (*models.User, error) {
 
 	return &user, nil
 }
+
+func (r *UserRepository) UpdateStatus(userID uuid.UUID, status models.UserStatus) error {
+	return r.db.Model(&models.User{}).Where("id = ?", userID).Update("status", status).Error
+}
